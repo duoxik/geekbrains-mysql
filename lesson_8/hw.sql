@@ -4,13 +4,22 @@
 /*         Используйте транзакции.                                                         */
 /* *************************************************************************************** */
 
-START TRANSACTION;
 USE shop;
-INSERT INTO sample.users (name, birthday_at, created_at, updated_at)
-SELECT name, birthday_at, created_at, updated_at
-FROM users
-WHERE id = 1;
-COMMIT;
+DROP PROCEDURE IF EXISTS tran_example;
+CREATE PROCEDURE tran_example()
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+    END;
+
+    START TRANSACTION;
+        INSERT INTO sample.users (name, birthday_at, created_at, updated_at)
+        SELECT name, birthday_at, created_at, updated_at FROM users WHERE id = 1;
+    COMMIT;
+END;
+
+CALL tran_example();
 
 /* *************************************************************************************** */
 /* TASK 2. Создайте хранимую функцию hello(), которая будет возвращать приветствие,        */
@@ -21,13 +30,18 @@ COMMIT;
 /* *************************************************************************************** */
 
 USE shop;
-CREATE OR REPLACE VIEW hello AS
-SELECT CASE
-           WHEN hour < 6 THEN 'Доброй ночи'
-           WHEN hour >= 6 AND hour < 12 THEN 'Доброе утро'
-           WHEN hour >= 12 AND hour < 18 THEN 'Добрый день'
-           WHEN hour >= 18 THEN 'Добрый вечер'
-           END
-FROM (
-         SELECT HOUR(NOW()) as hour
-     ) t;
+DROP PROCEDURE IF EXISTS hello;
+
+CREATE PROCEDURE hello()
+BEGIN
+    DECLARE hour INT;
+    SET hour = HOUR(NOW());
+    SELECT CASE
+               WHEN hour < 6 THEN 'Доброй ночи'
+               WHEN hour >= 6 AND hour < 12 THEN 'Доброе утро'
+               WHEN hour >= 12 AND hour < 18 THEN 'Добрый день'
+               WHEN hour >= 18 THEN 'Добрый вечер'
+               END;
+END;
+
+CALL hello();
